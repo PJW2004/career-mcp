@@ -1,5 +1,6 @@
 from fastmcp import FastMCP
 from tavily import TavilyClient
+# https://docs.tavily.com/welcome#extract-webpages
 
 import dotenv
 dotenv.load_dotenv()
