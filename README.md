@@ -1,4 +1,4 @@
-# career-mcp
+# job-search-mcp
 
 채용 플랫폼(잡코리아, 사람인)에서 회사명으로 채용공고를 검색하는 MCP 서버입니다.
 
@@ -47,7 +47,7 @@ pnpm build
 ### Claude Code에 MCP 서버 등록
 
 ```bash
-claude mcp add career -- node /path/to/career-mcp/dist/index.js
+claude mcp add career -- node /path/to/job-search-mcp/dist/index.js
 ```
 
 ### Claude Desktop 설정
@@ -59,7 +59,7 @@ claude mcp add career -- node /path/to/career-mcp/dist/index.js
   "mcpServers": {
     "career": {
       "command": "node",
-      "args": ["/path/to/career-mcp/dist/index.js"]
+      "args": ["/path/to/job-search-mcp/dist/index.js"]
     }
   }
 }

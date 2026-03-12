@@ -3,7 +3,7 @@
 ## 프로젝트 구조
 
 ```
-career-mcp/
+job-search-mcp/
 ├── src/
 │   ├── index.ts              # MCP 서버 진입점 + 도구 핸들러
 │   ├── types.ts              # 공통 타입 정의

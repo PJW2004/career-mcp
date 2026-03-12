@@ -108,7 +108,7 @@ function formatJobPostings(
 }
 
 const server = new Server(
-    { name: "career-mcp", version: "0.0.1" },
+    { name: "job-search-mcp", version: "0.0.1" },
     { capabilities: { tools: {} } }
 );
 
