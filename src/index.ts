@@ -109,7 +109,7 @@ function formatJobPostings(
 }
 
 const server = new Server(
-    { name: "job-search-mcp", version: "0.0.1" },
+    { name: "job-search-mcp", version: "0.0.2" },
     { capabilities: { tools: {} } }
 );
 

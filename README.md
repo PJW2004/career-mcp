@@ -1,5 +1,8 @@
 # job-search-mcp
 
+[![npm version](https://img.shields.io/npm/v/job-search-mcp)](https://www.npmjs.com/package/job-search-mcp)
+[![MCP Badge](https://lobehub.com/badge/mcp/pjw2004-job-search-mcp)](https://lobehub.com/mcp/pjw2004-job-search-mcp)
+
 채용 플랫폼(잡코리아, 사람인)에서 회사명으로 채용공고를 검색하는 MCP 서버입니다.
 
 > [!NOTE] 
@@ -99,7 +102,3 @@ claude mcp add job-search -- node /path/to/job-search-mcp/dist/index.js
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
-
-## Other
-
-[![MCP Badge](https://lobehub.com/badge/mcp-full/pjw2004-job-search-mcp)](https://lobehub.com/mcp/pjw2004-job-search-mcp)
