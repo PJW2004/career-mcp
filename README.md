@@ -76,3 +76,7 @@ claude mcp add career -- node /path/to/job-search-mcp/dist/index.js
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+## Other
+
+[![MCP Badge](https://lobehub.com/badge/mcp-full/pjw2004-job-search-mcp)](https://lobehub.com/mcp/pjw2004-job-search-mcp)
