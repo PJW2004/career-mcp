@@ -1,0 +1,33 @@
+{
+    "name": "career-mcp",
+    "version": "2.0.0",
+    "description": "MCP Server for searching job postings on JobKorea, Wanted, and Saramin",
+    "main": "dist/index.js",
+    "type": "module",
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/index.js"
+    },
+    "keywords": [
+        "mcp",
+        "model-context-protocol",
+        "jobkorea",
+        "wanted",
+        "saramin",
+        "job-search"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.0.4",
+        "cheerio": "^1.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.19",
+        "typescript": "^5.3.3"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "packageManager": "pnpm@8.15.0"
+}
