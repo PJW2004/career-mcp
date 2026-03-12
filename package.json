@@ -1,7 +1,7 @@
 {
     "name": "career-mcp",
-    "version": "2.0.0",
-    "description": "MCP Server for searching job postings on JobKorea, Wanted, and Saramin",
+    "version": "0.1.0",
+    "description": "MCP Server for searching job postings on JobKorea and Saramin",
     "main": "dist/index.js",
     "type": "module",
     "scripts": {
@@ -12,7 +12,6 @@
         "mcp",
         "model-context-protocol",
         "jobkorea",
-        "wanted",
         "saramin",
         "job-search"
     ],
