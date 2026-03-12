@@ -75,8 +75,6 @@ claude mcp add career -- node /path/to/career-mcp/dist/index.js
 잡코리아에서 삼성SDS 채용공고 2페이지 보여줘
 ```
 
-## 면책 조항
+## License
 
-이 프로젝트는 교육 및 개인 학습 목적으로 제작되었습니다.
-각 채용 플랫폼의 이용약관을 확인한 후 사용하시기 바랍니다.
-본 소프트웨어의 사용으로 인한 법적 책임은 사용자에게 있습니다.
+MIT License. See [LICENSE](LICENSE) for details.
