@@ -44,20 +44,43 @@ pnpm build
 
 ## 사용법
 
-### Claude Code에 MCP 서버 등록
+### npx로 실행 (권장)
+
+#### Claude Code
 
 ```bash
-claude mcp add career -- node /path/to/job-search-mcp/dist/index.js
+claude mcp add job-search -- npx -y job-search-mcp
 ```
 
-### Claude Desktop 설정
+#### Claude Desktop
 
 `claude_desktop_config.json`에 추가:
 
 ```json
 {
   "mcpServers": {
-    "career": {
+    "job-search": {
+      "command": "npx",
+      "args": ["-y", "job-search-mcp"]
+    }
+  }
+}
+```
+
+### 로컬 빌드로 실행
+
+#### Claude Code
+
+```bash
+claude mcp add job-search -- node /path/to/job-search-mcp/dist/index.js
+```
+
+#### Claude Desktop
+
+```json
+{
+  "mcpServers": {
+    "job-search": {
       "command": "node",
       "args": ["/path/to/job-search-mcp/dist/index.js"]
     }
