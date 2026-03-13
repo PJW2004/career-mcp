@@ -1,6 +1,7 @@
 {
     "name": "job-search-mcp",
     "version": "0.0.3",
+    "mcpName": "io.github.pjw2004/job-search",
     "description": "MCP Server for searching job postings on JobKorea and Saramin",
     "main": "dist/index.js",
     "type": "module",
