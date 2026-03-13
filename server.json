@@ -6,12 +6,12 @@
     "url": "https://github.com/PJW2004/career-mcp",
     "source": "github"
   },
-  "version": "0.0.4",
+  "version": "0.0.5",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "job-search-mcp",
-      "version": "0.0.4",
+      "version": "0.0.5",
       "transport": {
         "type": "stdio"
       }

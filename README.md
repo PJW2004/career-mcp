@@ -37,6 +37,17 @@
 | `platform` | string | - | `"all"` | 검색할 플랫폼 (`jobkorea`, `saramin`, `all`) |
 | `page` | number | - | `1` | 페이지 번호 |
 
+### `search_jobs_bulk`
+
+여러 회사의 채용공고를 한 번에 병렬로 검색합니다. `search_jobs`를 반복 호출하는 것보다 훨씬 빠릅니다.
+
+#### 파라미터
+
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|----------|------|------|--------|------|
+| `company_names` | string[] | ✅ | - | 검색할 회사명 목록 |
+| `platform` | string | - | `"all"` | 검색할 플랫폼 (`jobkorea`, `saramin`, `all`) |
+
 ## 설치
 
 ```bash
@@ -95,8 +106,17 @@ claude mcp add job-search -- node /path/to/job-search-mcp/dist/index.js
 
 ```
 당근마켓 채용공고 검색해줘
+```
+```
 사람인에서 네이버 채용공고 찾아줘
-잡코리아에서 삼성SDS 채용공고 2페이지 보여줘
+```
+
+### 일괄 검색 예시
+
+여러 회사의 채용공고를 한 번에 검색할 때 유용합니다. `search_jobs`를 반복 호출하는 것보다 빠릅니다.
+
+```
+네이버, 카카오, 라인플러스, 당근마켓, 토스 채용공고를 한 번에 검색해줘.
 ```
 
 ## License

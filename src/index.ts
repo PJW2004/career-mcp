@@ -35,7 +35,8 @@ const TOOLS: Tool[] = [
             properties: {
                 company_name: {
                     type: "string",
-                    description: "검색할 회사명",
+                    description:
+                        "검색할 회사명. 사용자가 입력한 회사명을 그대로 전달하세요. 임의로 줄이거나 변형하지 마세요.",
                 },
                 platform: {
                     type: "string",
@@ -51,6 +52,33 @@ const TOOLS: Tool[] = [
                 },
             },
             required: ["company_name"],
+        },
+    },
+    {
+        name: "search_jobs_bulk",
+        description:
+            "Search job postings for multiple companies at once (여러 회사 채용공고 일괄 검색). " +
+            "여러 회사명을 한 번에 입력하면 내부에서 병렬로 검색하여 결과를 반환합니다. " +
+            "병역특례 지정업체 목록 등 다수의 회사를 한 번에 조회할 때 사용하세요. " +
+            "search_jobs를 여러 번 호출하는 것보다 훨씬 빠릅니다.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                company_names: {
+                    type: "array",
+                    items: { type: "string" },
+                    description:
+                        "검색할 회사명 목록. 사용자가 입력한 회사명을 그대로 전달하세요. 임의로 줄이거나 변형하지 마세요.",
+                },
+                platform: {
+                    type: "string",
+                    enum: ["jobkorea", "saramin", "all"],
+                    description:
+                        "검색할 플랫폼 (jobkorea, saramin, all). 기본값: all",
+                    default: "all",
+                },
+            },
+            required: ["company_names"],
         },
     },
 ];
@@ -113,13 +141,42 @@ function formatJobPostings(
 }
 
 const server = new Server(
-    { name: "job-search-mcp", version: "0.0.4" },
+    { name: "job-search-mcp", version: "0.0.5" },
     { capabilities: { tools: {} } }
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: TOOLS,
 }));
+
+async function searchCompany(
+    companyName: string,
+    platformName: PlatformName,
+    page: number
+): Promise<{ postings: JobPosting[]; errors: string[] }> {
+    const params: SearchParams = { companyName, page };
+    const postings: JobPosting[] = [];
+    const errors: string[] = [];
+
+    if (platformName === "all") {
+        const results = await Promise.all(
+            Object.values(PLATFORMS).map((p) => searchPlatform(p, params))
+        );
+        for (const r of results) {
+            postings.push(...r.results);
+            if (r.error) errors.push(r.error);
+        }
+    } else {
+        const platform = PLATFORMS[platformName];
+        if (platform) {
+            const r = await searchPlatform(platform, params);
+            postings.push(...r.results);
+            if (r.error) errors.push(r.error);
+        }
+    }
+
+    return { postings, errors };
+}
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
@@ -136,35 +193,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             };
         }
 
-        const params: SearchParams = { companyName, page };
-        const allPostings: JobPosting[] = [];
-        const errors: string[] = [];
-
-        if (platformName === "all") {
-            const results = await Promise.all(
-                Object.values(PLATFORMS).map((p) => searchPlatform(p, params))
-            );
-            for (const r of results) {
-                allPostings.push(...r.results);
-                if (r.error) errors.push(r.error);
-            }
-        } else {
-            const platform = PLATFORMS[platformName];
-            if (!platform) {
-                return {
-                    content: [
-                        {
-                            type: "text",
-                            text: `알 수 없는 플랫폼: ${platformName}. 사용 가능: jobkorea, saramin, all`,
-                        },
-                    ],
-                    isError: true,
-                };
-            }
-            const r = await searchPlatform(platform, params);
-            allPostings.push(...r.results);
-            if (r.error) errors.push(r.error);
+        if (!PLATFORMS[platformName] && platformName !== "all") {
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: `알 수 없는 플랫폼: ${platformName}. 사용 가능: jobkorea, saramin, all`,
+                    },
+                ],
+                isError: true,
+            };
         }
+
+        const { postings, errors } = await searchCompany(
+            companyName,
+            platformName,
+            page
+        );
 
         const platformLabel =
             platformName === "all"
@@ -172,7 +217,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 : PLATFORMS[platformName].name;
 
         const formatted = formatJobPostings(
-            allPostings,
+            postings,
             companyName,
             platformLabel,
             errors
@@ -180,7 +225,94 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         return {
             content: [{ type: "text", text: formatted }],
-            isError: errors.length > 0 && allPostings.length === 0,
+            isError: errors.length > 0 && postings.length === 0,
+        };
+    }
+
+    if (name === "search_jobs_bulk") {
+        const companyNames = args?.company_names as string[];
+        const platformName = ((args?.platform as string) || "all") as PlatformName;
+
+        if (!companyNames || companyNames.length === 0) {
+            return {
+                content: [
+                    { type: "text", text: "회사명 목록을 입력해주세요." },
+                ],
+                isError: true,
+            };
+        }
+
+        const platformLabel =
+            platformName === "all"
+                ? "잡코리아+사람인"
+                : PLATFORMS[platformName]?.name ?? platformName;
+
+        const results = await Promise.all(
+            companyNames.map(async (company) => {
+                const { postings, errors } = await searchCompany(
+                    company,
+                    platformName,
+                    1
+                );
+                return { company, postings, errors };
+            })
+        );
+
+        const parts: string[] = [
+            `일괄 검색 결과 (${platformLabel}, ${companyNames.length}개 회사)`,
+            "=".repeat(60),
+        ];
+
+        let totalPostings = 0;
+        const allErrors: string[] = [];
+
+        for (const { company, postings, errors } of results) {
+            if (postings.length > 0) {
+                totalPostings += postings.length;
+                parts.push(
+                    `\n■ ${company} (${postings.length}건)`,
+                    "-".repeat(40)
+                );
+                postings.forEach((job, i) => {
+                    parts.push(
+                        [
+                            `  [${i + 1}] ${job.title}`,
+                            `      플랫폼: ${job.platform}`,
+                            `      경력: ${job.experience || "-"}`,
+                            `      학력: ${job.education || "-"}`,
+                            `      지역: ${job.location || "-"}`,
+                            `      마감: ${job.deadline || "-"}`,
+                            `      URL: ${job.url}`,
+                        ].join("\n")
+                    );
+                });
+            }
+            allErrors.push(...errors);
+        }
+
+        if (totalPostings === 0) {
+            parts.push("\n검색된 채용공고가 없습니다.");
+        }
+
+        const companiesWithPostings = results.filter(
+            (r) => r.postings.length > 0
+        ).length;
+        parts.push(
+            "",
+            `총 ${companiesWithPostings}/${companyNames.length}개 회사에서 ${totalPostings}건의 공고 발견`
+        );
+
+        if (allErrors.length > 0) {
+            parts.push(
+                "",
+                "⚠ 일부 오류:",
+                ...allErrors.map((e) => `  - ${e}`)
+            );
+        }
+
+        return {
+            content: [{ type: "text", text: parts.join("\n") }],
+            isError: allErrors.length > 0 && totalPostings === 0,
         };
     }
 
