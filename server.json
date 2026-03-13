@@ -1,0 +1,20 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.PJW2004/job-search",
+  "description": "Search Korean job postings from JobKorea and Saramin by company name",
+  "repository": {
+    "url": "https://github.com/PJW2004/career-mcp",
+    "source": "github"
+  },
+  "version": "0.0.4",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "job-search-mcp",
+      "version": "0.0.4",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
