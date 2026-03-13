@@ -25,7 +25,11 @@ const TOOLS: Tool[] = [
     {
         name: "search_jobs",
         description:
-            "채용 플랫폼(잡코리아, 사람인)에서 회사명으로 채용공고를 검색합니다. 회사명을 입력하면 해당 회사의 채용공고 목록(공고 제목, 경력, 학력, 지역, 마감일, URL)을 반환합니다.",
+            "Search Korean job postings (채용공고 검색). " +
+            "Searches JobKorea and Saramin for job listings by company name. " +
+            "한국 채용공고 검색 도구입니다. 회사명을 입력하면 잡코리아와 사람인에서 해당 회사의 채용공고를 검색합니다. " +
+            "어떤 회사명이든 검색 가능합니다. 채용, 구인, 구직, 취업, job search, hiring, career, recruitment 관련 질문에 이 도구를 사용하세요. " +
+            "공고 제목, 경력, 학력, 지역, 마감일, URL을 반환합니다.",
         inputSchema: {
             type: "object",
             properties: {
@@ -109,7 +113,7 @@ function formatJobPostings(
 }
 
 const server = new Server(
-    { name: "job-search-mcp", version: "0.0.2" },
+    { name: "job-search-mcp", version: "0.0.3" },
     { capabilities: { tools: {} } }
 );
 
