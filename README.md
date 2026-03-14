@@ -143,15 +143,7 @@ LG이노텍, 삼성전기, SK실트론, DB하이텍, 한미반도체, 리노공�
 
 ## 아키텍처
 
-```
-Client (LLM)
-  │
-  ▼
-MCP Server (search_jobs / search_jobs_bulk)
-  │
-  ├─ 잡코리아 (HTML scraping, 15s timeout)
-  └─ 사람인   (HTML scraping, 15s timeout)
-```
+<img src="img/job_search_mcp_architecture.svg" />
 
 - **동시성 제어**: `search_jobs_bulk`는 10개씩 배치로 병렬 요청
 - **결과 저장**: 대량 검색 결과는 임시 파일(`%TEMP%/job-search-mcp/`)로 저장하여 컨텍스트 절약
