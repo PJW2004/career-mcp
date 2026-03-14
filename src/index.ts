@@ -15,11 +15,29 @@ import {
 } from "./types.js";
 import { jobkorea } from "./platforms/jobkorea.js";
 import { saramin } from "./platforms/saramin.js";
+import { writeFileSync, mkdirSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 
 const PLATFORMS: Record<string, JobPlatform> = {
     jobkorea,
     saramin,
 };
+
+const CONCURRENCY = 10;
+
+async function runWithConcurrency<T, R>(
+    items: T[],
+    fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+    const results: R[] = [];
+    for (let i = 0; i < items.length; i += CONCURRENCY) {
+        const batch = items.slice(i, i + CONCURRENCY);
+        const batchResults = await Promise.all(batch.map(fn));
+        results.push(...batchResults);
+    }
+    return results;
+}
 
 const TOOLS: Tool[] = [
     {
@@ -59,6 +77,7 @@ const TOOLS: Tool[] = [
         description:
             "Search job postings for multiple companies at once (여러 회사 채용공고 일괄 검색). " +
             "여러 회사명을 한 번에 입력하면 내부에서 병렬로 검색하여 결과를 반환합니다. " +
+            "결과는 파일로 저장되며, 요약과 파일 경로를 반환합니다. 파일을 읽어서 상세 내용을 확인하세요. " +
             "병역특례 지정업체 목록 등 다수의 회사를 한 번에 조회할 때 사용하세요. " +
             "search_jobs를 여러 번 호출하는 것보다 훨씬 빠릅니다.",
         inputSchema: {
@@ -141,7 +160,7 @@ function formatJobPostings(
 }
 
 const server = new Server(
-    { name: "job-search-mcp", version: "0.0.5" },
+    { name: "job-search-mcp", version: "0.0.6" },
     { capabilities: { tools: {} } }
 );
 
@@ -178,8 +197,18 @@ async function searchCompany(
     return { postings, errors };
 }
 
+function logResult(toolName: string, result: { content: { type: string; text: string }[] }, startTime: number) {
+    const chars = result.content.reduce((sum, c) => sum + c.text.length, 0);
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    const log = `\n\n--- ${toolName} | ${chars.toLocaleString()}자 | ${elapsed}s ---`;
+    result.content[result.content.length - 1].text += log;
+    console.error(`[MCP] ${toolName} → ${chars.toLocaleString()}자 / ${elapsed}s`);
+    return result;
+}
+
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+    const startTime = Date.now();
 
     if (name === "search_jobs") {
         const companyName = args?.company_name as string;
@@ -223,10 +252,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             errors
         );
 
-        return {
-            content: [{ type: "text", text: formatted }],
+        const result = {
+            content: [{ type: "text" as const, text: formatted }],
             isError: errors.length > 0 && postings.length === 0,
         };
+        return logResult(name, result, startTime);
     }
 
     if (name === "search_jobs_bulk") {
@@ -247,18 +277,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 ? "잡코리아+사람인"
                 : PLATFORMS[platformName]?.name ?? platformName;
 
-        const results = await Promise.all(
-            companyNames.map(async (company) => {
+        const results = await runWithConcurrency(
+            companyNames,
+            async (company) => {
                 const { postings, errors } = await searchCompany(
                     company,
                     platformName,
                     1
                 );
                 return { company, postings, errors };
-            })
+            }
         );
 
-        const parts: string[] = [
+        // 전체 결과를 파일로 저장
+        const fileLines: string[] = [
             `일괄 검색 결과 (${platformLabel}, ${companyNames.length}개 회사)`,
             "=".repeat(60),
         ];
@@ -267,60 +299,70 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const allErrors: string[] = [];
 
         for (const { company, postings, errors } of results) {
+            totalPostings += postings.length;
             if (postings.length > 0) {
-                totalPostings += postings.length;
-                parts.push(
-                    `\n■ ${company} (${postings.length}건)`,
-                    "-".repeat(40)
-                );
-                postings.forEach((job, i) => {
-                    parts.push(
-                        [
-                            `  [${i + 1}] ${job.title}`,
-                            `      플랫폼: ${job.platform}`,
-                            `      경력: ${job.experience || "-"}`,
-                            `      학력: ${job.education || "-"}`,
-                            `      지역: ${job.location || "-"}`,
-                            `      마감: ${job.deadline || "-"}`,
-                            `      URL: ${job.url}`,
-                        ].join("\n")
-                    );
-                });
+                fileLines.push(`\n■ ${company} (${postings.length}건)`);
+                for (const job of postings) {
+                    fileLines.push(`  - ${job.companyName} | ${job.title} | ${job.experience || "-"} | ${job.location || "-"} | ${job.url} | ${job.deadline}`);
+                }
+            } else {
+                fileLines.push(`\n■ ${company} (0건)`);
             }
             allErrors.push(...errors);
-        }
-
-        if (totalPostings === 0) {
-            parts.push("\n검색된 채용공고가 없습니다.");
         }
 
         const companiesWithPostings = results.filter(
             (r) => r.postings.length > 0
         ).length;
-        parts.push(
+
+        fileLines.push(
             "",
             `총 ${companiesWithPostings}/${companyNames.length}개 회사에서 ${totalPostings}건의 공고 발견`
         );
 
         if (allErrors.length > 0) {
-            parts.push(
+            fileLines.push(
                 "",
                 "⚠ 일부 오류:",
                 ...allErrors.map((e) => `  - ${e}`)
             );
         }
 
-        return {
-            content: [{ type: "text", text: parts.join("\n") }],
+        // 파일 저장
+        const resultDir = join(tmpdir(), "job-search-mcp");
+        mkdirSync(resultDir, { recursive: true });
+        const filePath = join(resultDir, `bulk_${Date.now()}.txt`);
+        writeFileSync(filePath, fileLines.join("\n"), "utf-8");
+
+        // 요약만 반환
+        const summary = [
+            `일괄 검색 완료 (${platformLabel}, ${companyNames.length}개 회사)`,
+            `총 ${companiesWithPostings}/${companyNames.length}개 회사에서 ${totalPostings}건의 공고 발견`,
+            "",
+            `상세 결과 파일: ${filePath}`,
+            "파일을 읽어서 상세 내용을 확인하세요.",
+        ];
+
+        if (allErrors.length > 0) {
+            summary.push(
+                "",
+                "⚠ 일부 오류:",
+                ...allErrors.map((e) => `  - ${e}`)
+            );
+        }
+
+        const result = {
+            content: [{ type: "text" as const, text: summary.join("\n") }],
             isError: allErrors.length > 0 && totalPostings === 0,
         };
+        return logResult(name, result, startTime);
     }
 
-    return {
-        content: [{ type: "text", text: `알 수 없는 도구: ${name}` }],
-        isError: true,
-    };
+    return logResult(name, {
+        content: [{ type: "text" as const, text: `알 수 없는 도구: ${name}` }],
+    }, startTime);
 });
+
 
 async function main() {
     const transport = new StdioServerTransport();

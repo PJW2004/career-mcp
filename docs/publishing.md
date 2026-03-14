@@ -5,7 +5,7 @@
 ### 사전 준비
 
 - [npm](https://www.npmjs.com) 계정 필요
-- Node.js 18 이상
+- Node.js 20 이상
 
 ### 배포 절차
 
@@ -28,13 +28,13 @@ npm publish --access public
 
 ```jsonc
 // package.json
-{ "version": "0.0.3" }
+{ "version": "0.0.6" }
 ```
 
 ```ts
 // src/index.ts
 const server = new Server(
-    { name: "job-search-mcp", version: "0.0.3" },
+    { name: "job-search-mcp", version: "0.0.6" },
     ...
 );
 ```
@@ -100,12 +100,12 @@ mcp-publisher init
         "url": "https://github.com/PJW2004/career-mcp",
         "source": "github"
     },
-    "version": "0.0.3",
+    "version": "0.0.6",
     "packages": [
         {
             "registryType": "npm",
             "identifier": "job-search-mcp",
-            "version": "0.0.3",
+            "version": "0.0.6",
             "transport": {
                 "type": "stdio"
             }
@@ -142,7 +142,8 @@ curl "https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.pjw
 
 1. `package.json`의 `version` 수정
 2. `src/index.ts`의 Server 버전 수정
-3. `pnpm build` 확인
-4. `npm publish --access public`
-5. `server.json`의 `version`과 `packages[].version` 수정
-6. `mcp-publisher publish`
+3. `README.md`의 MCP Registry 배지 버전 수정
+4. `pnpm build` 확인
+5. `npm publish --access public`
+6. `server.json`의 `version`과 `packages[].version` 수정
+7. `mcp-publisher publish`

@@ -44,6 +44,7 @@ const PLATFORMS: Record<string, JobPlatform> = {
 ## 4. 체크리스트
 
 - [ ] `JobPosting`의 `platform` 필드에 한글 플랫폼명을 설정했는가
+- [ ] fetch에 `signal: AbortSignal.timeout(15000)` 타임아웃을 적용했는가
 - [ ] fetch 실패 시 `JobSearchError`를 throw하는가
 - [ ] 파싱 실패 시 빈 배열을 반환하는가 (다른 플랫폼에 영향 없도록)
 - [ ] `pnpm build` 통과하는가

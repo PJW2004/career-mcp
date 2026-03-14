@@ -30,6 +30,7 @@ async function search(params: SearchParams): Promise<JobPosting[]> {
                 "Accept-Language": "ko-KR,ko;q=0.9",
                 Referer: BASE_URL,
             },
+            signal: AbortSignal.timeout(15000),
         });
 
         if (!response.ok) {

@@ -72,6 +72,26 @@ GET https://www.saramin.co.kr/zf_user/search?searchType=search&searchword={검�
 | 학력 | `.job_condition span:nth-child(3)` |
 | 마감일 | `.job_date .date` |
 
+## 동시성 제어 및 결과 저장
+
+### `search_jobs_bulk`
+
+- 10개 회사씩 배치로 나누어 `Promise.all`로 병렬 요청 (`CONCURRENCY = 10`)
+- 결과는 임시 디렉토리(`{os.tmpdir()}/job-search-mcp/`)에 텍스트 파일로 저장
+- LLM에게는 요약(총 건수, 파일 경로)만 반환하여 컨텍스트 윈도우 절약
+
+### 타임아웃
+
+각 플랫폼의 HTTP 요청에 `AbortSignal.timeout(15000)` (15초)이 적용됩니다.
+시간 초과 시 해당 요청만 실패 처리되고, 나머지 결과는 정상 반환됩니다.
+
+### 응답 로깅
+
+모든 도구 응답에 `logResult()`가 적용되어, 응답 끝에 글자 수와 소요 시간이 추가됩니다:
+```
+--- search_jobs | 1,234자 | 2.3s ---
+```
+
 ## 에러 처리
 
 각 플랫폼은 독립적으로 에러를 처리합니다. `platform=all`로 검색 시 한 플랫폼이 실패해도
