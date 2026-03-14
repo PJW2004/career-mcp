@@ -163,11 +163,47 @@ MCP Server (search_jobs / search_jobs_bulk)
 - 짧은 시간에 너무 많은 요청을 보내면 플랫폼 측에서 일시적으로 접근을 차단(rate limit)할 수 있습니다.
 - 각 요청에는 15초 타임아웃이 적용되어 있으며, 시간 초과 시 해당 요청은 실패 처리되고 나머지 결과는 정상 반환됩니다.
 
-## 성능 기록
+## 성능 개선 기록
 
-| 버전 | 기업 수 | 소요 시간 | 비고 |
-|------|---------|-----------|------|
-| `v0.0.6` | 100 | 19.7s | 동시성 제한(10 batch) + 파일 저장 방식 |
+테스트 환경 : 
+- 모델 : `Claude Opus 4.6 (1M)`
+- 장비 : `Raspberry pi 4 Model B 8GB RAM`
+- 네트워크 : `CAT 5E UTP`
+
+| 버전 | 기업(건) | 공고(개) | 소요 시간(MCP) | 소요 시간(총합) | 비고 |
+|--|--|--|--|--|--|
+| `v0.0.5` | 100 | 5,002 | `maximum allowed tokens` | 3m 18s | 단순 토큰 출력 방식 |
+| `v0.0.6` | 100 | 5,002 | 125.7s | 2m 49s | 동시성 제한(10 batch)<br/>파일 저장 방식 |
+
+## 트러블슈팅
+
+### Raspberry Pi 등 저사양 환경에서 MCP 실행이 극도로 느린 경우
+
+**현상**
+
+`search_jobs_bulk`로 대량 검색 시, 로컬 PC에서는 수십 초면 끝나는 작업이 수십 분 이상 걸리거나 응답이 오지 않습니다.
+
+**원인**
+
+`npx -y job-search-mcp` 방식은 매 실행마다 npm registry에서 최신 버전을 확인합니다. Raspberry Pi처럼 네트워크가 느린 환경에서는 이 registry 통신이 병목이 되어, 실제 검색이 시작되기 전에 수 분 이상 지연될 수 있습니다.
+
+```bash
+# ss -tnp로 확인하면 npm registry(104.16.x.x)에 연결된 상태로 멈춰있음
+ESTAB  0  0  192.168.x.x:41824  104.16.3.34:443  users:(("npm exec job-se",...))
+```
+
+**해결**
+
+글로벌 설치로 전환하면 매번 registry를 확인하지 않고 바로 실행됩니다.
+
+```bash
+# 글로벌 설치
+npm install -g job-search-mcp
+
+# Claude Code MCP 설정 변경
+claude mcp remove job-search
+claude mcp add job-search -- job-search-mcp
+```
 
 ## License
 
