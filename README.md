@@ -1,5 +1,6 @@
 # job-search-mcp
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/job-search-mcp)](https://www.npmjs.com/package/job-search-mcp)
 [![MCP Registry](https://img.shields.io/badge/mcp_registry-v0.0.6-blue)](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.PJW2004%2Fjob-search/versions/0.0.6)
 
